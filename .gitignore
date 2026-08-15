@@ -1,5 +1,5 @@
 *.vim
 
-./bin
+./bin/*
 
 *.swp
