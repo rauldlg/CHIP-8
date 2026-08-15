@@ -1,7 +1,9 @@
-#include <stdio.h>
-
 int main(void)
 {
-    printf("Hello World!\n");
+    // initializing memory
+    unsigned char ram[4096];
+    memset(ram, 0, 4096*sizeof(char));
+
+
     return 0;
 }
