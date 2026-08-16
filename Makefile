@@ -3,7 +3,7 @@ CC = gcc
 VPATH = build:src:tests
 
 build/chip-8: chp8.c main.c
-	$(CC) $(CFLAGS) $^ -o $@
+	$(CC) $^ -o $@ $(CFLAGS)
 
 .PHONY = run
 run: chip-8
@@ -12,5 +12,4 @@ run: chip-8
 .PHONY = debug
 
 debug: chp8.c main.c
-	$(CC) $(CFLAGS) -g $^ -o tests/debug
-
+	$(CC) -g $^ -o tests/debug $(CFLAGS) 

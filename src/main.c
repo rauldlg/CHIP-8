@@ -1,7 +1,7 @@
 #include "chp8.h"
 #include <string.h>
 #include <stdio.h>
-#include "raylib.h"
+#include <raylib.h>
 
 int sizeof_rom(FILE* rom);
 
@@ -29,19 +29,19 @@ int main(int argc, char** argv)
 
     initialize_chip8(&chp8, start_rom);
 
-    InitWindow(64, 32, "CHIP-8 Interpreter");
-    while(WindowShouldClose())
+    InitWindow(640, 320, "CHIP-8 Interpreter");
+
+    while(!WindowShouldClose())
     {
         fetch(&chp8);
         decode(&chp8);
         execute(&chp8);
+
         BeginDrawing();
-        ClearBackground(RAYWHITE);
+        ClearBackground(BLACK);
         EndDrawing();
 
     }
-
-    // fetch-decode-execute cycle
 
     return 0;
 }
