@@ -1,6 +1,8 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "chp8.h"
 #include <string.h>
+
 void initialize_chip8(Chip8* chp, unsigned short* mem)
 {
     memset(chp->V, 0, sizeof(char)*16);
@@ -13,25 +15,54 @@ void initialize_chip8(Chip8* chp, unsigned short* mem)
     chp->IR = 0;
 }
 
-unsigned short fetch(Chip8* chp)
+void print_chip8(Chip8* chp)
 {
-    chp->IR = *chp->PC;
-    chp->IR = ((chp->IR & 0x00FF) << 8) | ((chp->IR & 0xFF00) >> 8);
-    //printf("fetch: %#06x\n", chp->IR);
-    chp->PC++;
-    //return OPCODE to decode
-    return chp->IR;
-}
-
-void decode(Chip8* chp, unsigned short* opcode)
-{
-    switch((*opcode & 0xF000) >> 12)
+    printf("IR=0x%04x\nI=0x%04x\nPC=%p\n", chp->IR, chp->I,(void*)chp->PC);
+    for(int i = 0; i <= 0xF; i++)
     {
-        case 0xA:
-            //printf("\nopcode: Annn\n");
-            //printf("\nI Register: 0x%04x", chp->I);
-            chp->I = *opcode & 0x0FFF;
-            //printf("\nI Register after: 0x%04x\n", chp->I);
-            break;
+        printf("V%X=0x%04x\n", i, chp->V[i]);
     }
 }
+
+void fetch(Chip8* chp)
+{
+    chp->IR = *chp->PC;
+}
+
+void decode(Chip8* chp)
+{
+    chp->IR = ((chp->IR & 0x00FF) << 8) | ((chp->IR & 0xFF00) >> 8);
+
+}
+
+
+void execute(Chip8* chp)
+{
+    unsigned char x = 0;
+    switch((chp->IR & 0xF000) >> 12)
+    {
+        case 0x3:
+            x = ((chp->IR & 0x0F00) >> 8);
+            if(chp->V[x] == (chp->IR & 0x00FF))
+            {
+                chp->PC+=2;
+                break;
+            }
+            chp->PC++;
+            break;
+        case 0xA:
+            chp->I = chp->IR & 0x0FFF;
+            chp->PC++;
+            break;
+        case 0xC:
+             x = ((chp->IR & 0x0F00) >> 8);
+            chp->V[x] = (random() % 256) & (chp->IR & 0x00FF);
+            chp->PC++;
+            break;
+        case 0xD:
+            // draw
+    }
+    print_chip8(chp);
+}
+
+

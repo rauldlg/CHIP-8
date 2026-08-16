@@ -1,4 +1,4 @@
-CFLAGS = -Wall -Wextra -fdiagnostics-color=always
+CFLAGS = -Wall -Wextra -fdiagnostics-color=always -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
 CC = gcc
 VPATH = build:src:tests
 

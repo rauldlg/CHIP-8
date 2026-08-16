@@ -14,6 +14,8 @@ typedef struct
 
 void initialize_chip8(Chip8* chp, unsigned short* mem);
 
-unsigned short fetch(Chip8* chp);
+void fetch(Chip8* chp);
 
-void decode(Chip8* chp, unsigned short* opcode);
+void decode(Chip8* chp);
+
+void execute(Chip8* chp);
