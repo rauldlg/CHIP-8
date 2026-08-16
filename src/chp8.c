@@ -1,3 +1,4 @@
+#include <raylib.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "chp8.h"
@@ -9,10 +10,11 @@ void initialize_chip8(Chip8* chp, unsigned short* mem)
     chp->I = 0;
     chp->DT = 0;
     chp->ST = 0;
-    chp->PC = mem;
+    chp->PC = &mem[0x200];
     memset(chp->stack, 0, sizeof(short)*16);
     chp->SP = &chp->stack[16];
     chp->IR = 0;
+    InitWindow(640, 320, "CHIP-8 Interpreter");
 }
 
 void print_chip8(Chip8* chp)
@@ -61,7 +63,7 @@ void execute(Chip8* chp)
             break;
         case 0xD:
             // draw
-            //
+            
     }
     print_chip8(chp);
 }

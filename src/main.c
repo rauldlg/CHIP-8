@@ -25,11 +25,10 @@ int main(int argc, char** argv)
 
     // initialize chip-8 interpreter
     Chip8 chp8;
-    unsigned short* start_rom = (unsigned short*)&ram[0x200];
+    unsigned short* start_ram = (unsigned short*)&ram;
 
-    initialize_chip8(&chp8, start_rom);
+    initialize_chip8(&chp8, start_ram);
 
-    InitWindow(640, 320, "CHIP-8 Interpreter");
 
     while(!WindowShouldClose())
     {
@@ -38,7 +37,7 @@ int main(int argc, char** argv)
         execute(&chp8);
 
         BeginDrawing();
-        ClearBackground(BLACK);
+            ClearBackground(BLACK);
         EndDrawing();
 
     }
