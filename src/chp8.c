@@ -1,4 +1,4 @@
-#include <raylib.h>
+//#include <raylib.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "chp8.h"
@@ -11,12 +11,12 @@ void initialize_chip8(Chip8* chp, unsigned short* mem)
     chp->I = 0;
     chp->DT = 0;
     chp->ST = 0;
-    chp->PC = &mem[0x200];
+    chp->mem = mem;
+    chp->PC = &mem[0x100];
     memset(chp->stack, 0, sizeof(short)*16);
     chp->SP = &chp->stack[16];
     chp->IR = 0;
-    InitWindow(64*10, 32*10, "CHIP-8 Interpreter");
-    memset(chp->screen, 0, sizeof(int)*64*32);
+    memset(chp->display, 0, sizeof(int)*64*32);
 }
 
 void print_chip8(Chip8* chp)
@@ -31,6 +31,7 @@ void print_chip8(Chip8* chp)
 void fetch(Chip8* chp)
 {
     chp->IR = *chp->PC;
+    printf("IR: %d\n", chp->IR);
 }
 
 void decode(Chip8* chp)
@@ -72,18 +73,26 @@ void execute(Chip8* chp)
             x = chp->V[x];
             y = chp->V[y];
 
-
-            BeginDrawing();
-                ClearBackground(BLACK);
-            EndDrawing();
-            // fetch I location
-            chp->IR = chp->I;
-            // decode Instruction to draw
-            chp->IR = ((chp->IR & 0x00FF) << 8) | ((chp->IR & 0xFF00) >> 8);
-
-
+           for(int i = 0; i <= (chp->IR & 0x000F); i++)
+           {
+                for(int j = 0; j <= 8; j++)
+                {
+                    chp->display[x+j][y+i] = (((char*) chp->mem)[chp->I+j]); // need to get the every bit in this and put to [x+j]
+                }
+           }
+           print_display(chp);
+           break;
     }
 }
 
-
-
+void print_display(Chip8* chp)
+{
+    for(int y = 0; y < 32; y++)
+    {
+        for(int x = 0; x < 64; x++)
+        {
+            printf("[%d]", chp->display[x][y]);
+        }
+        putchar('\n');
+    }
+}
