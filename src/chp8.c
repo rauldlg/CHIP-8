@@ -4,6 +4,7 @@
 #include "chp8.h"
 #include <string.h>
 
+
 void initialize_chip8(Chip8* chp, unsigned short* mem)
 {
     memset(chp->V, 0, sizeof(char)*16);
@@ -14,7 +15,8 @@ void initialize_chip8(Chip8* chp, unsigned short* mem)
     memset(chp->stack, 0, sizeof(short)*16);
     chp->SP = &chp->stack[16];
     chp->IR = 0;
-    InitWindow(640, 320, "CHIP-8 Interpreter");
+    InitWindow(64*10, 32*10, "CHIP-8 Interpreter");
+    memset(chp->screen, 0, sizeof(int)*64*32);
 }
 
 void print_chip8(Chip8* chp)
@@ -34,7 +36,6 @@ void fetch(Chip8* chp)
 void decode(Chip8* chp)
 {
     chp->IR = ((chp->IR & 0x00FF) << 8) | ((chp->IR & 0xFF00) >> 8);
-
 }
 
 
@@ -62,10 +63,27 @@ void execute(Chip8* chp)
             chp->PC++;
             break;
         case 0xD:
-            // draw
-            
+            // get the Vx register
+            x = (chp->IR & 0x0F00) >> 8;
+            // get the Vy register
+            unsigned char y = (chp->IR & 0x00F0) >> 4;
+
+            // get the x and y position at Vx and Vy
+            x = chp->V[x];
+            y = chp->V[y];
+
+
+            BeginDrawing();
+                ClearBackground(BLACK);
+            EndDrawing();
+            // fetch I location
+            chp->IR = chp->I;
+            // decode Instruction to draw
+            chp->IR = ((chp->IR & 0x00FF) << 8) | ((chp->IR & 0xFF00) >> 8);
+
+
     }
-    print_chip8(chp);
 }
+
 
 

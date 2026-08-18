@@ -10,6 +10,7 @@ typedef struct
     unsigned short* SP; // Stack Pointer
     unsigned short stack[16]; // Stack
     unsigned short IR;
+    unsigned int screen[64][32];
 } Chip8;
 
 void initialize_chip8(Chip8* chp, unsigned short* mem);
