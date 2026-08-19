@@ -5,14 +5,14 @@
 #include <string.h>
 
 
-void initialize_chip8(Chip8* chp, unsigned short* mem)
+void initialize_chip8(Chip8* chp, unsigned char* mem)
 {
     memset(chp->V, 0, sizeof(char)*16);
     chp->I = 0;
     chp->DT = 0;
     chp->ST = 0;
     chp->mem = mem;
-    chp->PC = &mem[0x100];
+    chp->PC = (unsigned short*)&mem[0x200];
     memset(chp->stack, 0, sizeof(short)*16);
     chp->SP = &chp->stack[16];
     chp->IR = 0;
@@ -36,7 +36,7 @@ void fetch(Chip8* chp)
 void decode(Chip8* chp)
 {
     chp->IR = ((chp->IR & 0x00FF) << 8) | ((chp->IR & 0xFF00) >> 8);
-    //printf("IR: %#06x\nPC: %p\nI: %#06x\n", chp->IR, chp->PC, chp->I);
+    printf("IR: %#06x\nPC: %p\nI: %#06x\n", chp->IR, chp->PC, chp->I);
     //print_chip8(chp);
 }
 
@@ -84,8 +84,19 @@ void execute(Chip8* chp)
                 }
            }
             chp->PC++;
-           print_display(chp);
            break;
+        case 0x7:
+           print_chip8(chp);
+           x = (chp->IR & 0x0F00) >> 8;
+           chp->V[x] += (chp->IR & 0x00FF);
+           print_chip8(chp);
+           chp->PC++;
+           break;
+        case 0x1:
+           unsigned short loc = chp->IR & 0x0FFF;
+           chp->PC = (unsigned short*)&chp->mem[loc];
+           break;
+
     }
 }
 

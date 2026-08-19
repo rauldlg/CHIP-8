@@ -24,12 +24,11 @@ int main(int argc, char** argv)
 
         // initialize chip-8 interpreter
         Chip8 chp8;
-        unsigned short* start_ram = (unsigned short*)&ram;
 
-        initialize_chip8(&chp8, start_ram);
+        initialize_chip8(&chp8, ram);
  //       InitWindow(640, 320, "CHIP-8 Emulator");
    //     SetTargetFPS(60);
-        for(int i = 0; i < 33; i++)
+        for(;;)
         {
             fetch(&chp8);
             decode(&chp8);
