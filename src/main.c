@@ -1,40 +1,55 @@
 #include "chp8.h"
+#include <time.h>
 #include <string.h>
 #include <stdio.h>
-//#include <raylib.h>
+#include <raylib.h>
+#include <stdlib.h>
+
+#define WIDTH 640
+#define HEIGHT 320
+#define FPS 120
 
 int sizeof_rom(FILE* rom);
 
+void draw_display(Chip8* chp);
+
 int main(int argc, char** argv)
 {
+    srand(time(NULL));
         if (argc != 2)
         {
             fprintf(stderr, "usage: ./%s <file.chp8>\n", argv[0]);
             return -1;
         }
-        // initializing memory
+        
         unsigned char ram[4096];
-        memset(ram, 0, 4096*sizeof(char));
+        memset(ram, 0, 4096*sizeof(char)); // initializing memory
        
-        // read rom in ram
-        FILE* rom = fopen(argv[1], "r");
+        
+        FILE* rom = fopen(argv[1], "r"); // read rom in ram
         fread(&ram[0x200], sizeof(char), 4096-0x200, rom);
-        // close rom stream
-        fclose(rom);
+        fclose(rom); // close rom stream
 
-        // initialize chip-8 interpreter
+        
         Chip8 chp8;
+        initialize_chip8(&chp8, ram); // initialize chip-8 interpreter
 
-        initialize_chip8(&chp8, ram);
- //       InitWindow(640, 320, "CHIP-8 Emulator");
-   //     SetTargetFPS(60);
-        for(;;)
+        InitWindow(WIDTH, HEIGHT, "CHIP-8 Interpreter");
+        SetTargetFPS(FPS);
+
+        while(!WindowShouldClose())
         {
             fetch(&chp8);
             decode(&chp8);
             execute(&chp8);
+            
+            BeginDrawing();
+               ClearBackground(BLACK); 
+               draw_display(&chp8);
+            EndDrawing();
         }
 
+        print_display(&chp8);
     return 0;
 }
 
@@ -50,4 +65,30 @@ int sizeof_rom(FILE* rom)
     return counter;
 }
 
+void draw_display(Chip8* chp)
+{
 
+    int w, h;
+    w = 0;
+    h = 0;
+
+    for(int y = 0; y < 32; y++)
+    {
+        for(int x = 0; x < 64; x++)
+        {
+            if(chp->display[x][y])
+            {
+                DrawRectangle(w, h, 10, 10, WHITE);
+                w+=10;
+            }
+            else
+            {
+                DrawRectangle(w, h, 10, 10, BLACK);
+                w+=10;
+            }
+        
+        }
+        h+=10;
+        w = 0;
+    }
+}

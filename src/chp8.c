@@ -1,4 +1,5 @@
-//#include <raylib.h>
+#include <unistd.h>
+#include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "chp8.h"
@@ -21,8 +22,8 @@ void initialize_chip8(Chip8* chp, unsigned char* mem)
 
 void print_chip8(Chip8* chp)
 {
-    printf("IR=0x%04x\nI=0x%04x\nPC=%p\n", chp->IR, chp->I,(void*)chp->PC);
-    for(int i = 0; i <= 0xF; i++)
+    printf("PC=%p\nIR=0x%04x\nI=0x%04x\n", (void*)chp->PC, chp->IR, chp->I);
+    for(int i = 0; i <= 0x4; i++)
     {
         printf("V%X=0x%04x\n", i, chp->V[i]);
     }
@@ -36,8 +37,8 @@ void fetch(Chip8* chp)
 void decode(Chip8* chp)
 {
     chp->IR = ((chp->IR & 0x00FF) << 8) | ((chp->IR & 0xFF00) >> 8);
-    printf("IR: %#06x\nPC: %p\nI: %#06x\n", chp->IR, chp->PC, chp->I);
-    //print_chip8(chp);
+    //printf("IR: %#06x\nPC: %p\nI: %#06x\n", chp->IR, chp->PC, chp->I);
+    print_chip8(chp);
 }
 
 
@@ -60,8 +61,8 @@ void execute(Chip8* chp)
             chp->PC++;
             break;
         case 0xC:
-             x = ((chp->IR & 0x0F00) >> 8);
-            chp->V[x] = (random() % 256) & (chp->IR & 0x00FF);
+            x = ((chp->IR & 0x0F00) >> 8);
+            chp->V[x] =  (chp->IR & 0x00FF) & (rand() % 256);
             chp->PC++;
             break;
         case 0xD:
@@ -71,32 +72,49 @@ void execute(Chip8* chp)
             unsigned char y = (chp->IR & 0x00F0) >> 4;
 
             // get the x and y position at Vx and Vy
-            x = chp->V[x];
-            y = chp->V[y];
+            x = chp->V[x] % 63;
+            y = chp->V[y] % 31;
             unsigned char display_byte = 0;
-           for(int i = 0; i <= (chp->IR & 0x000F); i++)
+           for(int i = 0; i < (chp->IR & 0x000F); i++)
            {
                 for(int j = 0; j <= 8; j++)
                 {
-                    display_byte = ((char*)chp->mem)[chp->I-1];
+                    display_byte = ((char*)chp->mem)[chp->I+i];
                     // isn't test yet but i guess i have to move on
-                    chp->display[x+j][y+i] = ((display_byte & (0x80>>j)) >> (7-j));
+                    unsigned char collide = chp->display[x+j][y+i];
+                    chp->display[x+j][y+i] ^= ((display_byte & (0x80>>j)) >> (7-j));
+                    chp->V[0xF] = 0;
+                    if((collide == 1) && (chp->display[x+j][y+i] == 0))
+                    {
+                        chp->V[0xF] = 1;
+                    }
                 }
            }
+            printf("x: %d\ny: %d\n", x, y);
             chp->PC++;
            break;
         case 0x7:
-           print_chip8(chp);
            x = (chp->IR & 0x0F00) >> 8;
            chp->V[x] += (chp->IR & 0x00FF);
-           print_chip8(chp);
            chp->PC++;
            break;
         case 0x1:
            unsigned short loc = chp->IR & 0x0FFF;
            chp->PC = (unsigned short*)&chp->mem[loc];
            break;
-
+        case 0x6:
+            x = (chp->IR & 0x0F00) >> 8;
+            chp->V[x] = (chp->IR & 0x00FF);
+            chp->PC++;
+            break;
+        case 0x8:
+            if((chp->IR & 0x000F) == 0)
+            {
+                x = (chp->IR & 0x0F00) >> 8;
+                y = (chp->IR & 0x00F0) >> 4;
+                chp->V[x] = chp->V[y];
+                chp->PC++;
+            }
     }
 }
 
