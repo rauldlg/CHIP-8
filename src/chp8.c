@@ -15,7 +15,7 @@ void initialize_chip8(Chip8* chp, unsigned char* mem)
     chp->mem = mem;
     chp->PC = (unsigned short*)&mem[0x200];
     memset(chp->stack, 0, sizeof(short)*16);
-    chp->SP = &chp->stack[16];
+    chp->SP = 15;
     chp->IR = 0;
     memset(chp->display, 0, sizeof(int)*64*32);
 }
@@ -114,6 +114,21 @@ void execute(Chip8* chp)
                 y = (chp->IR & 0x00F0) >> 4;
                 chp->V[x] = chp->V[y];
                 chp->PC++;
+            }
+            break;
+        case 0x2:
+            chp->stack[chp->SP] = chp->PC;
+            chp->PC = (unsigned short*)&chp->mem[chp->IR & 0x0FFF];
+            chp->SP--;
+            break;
+        case 0x0:
+            if((chp->IR & 0x0F00) == 0)
+            {
+                if( (chp->IR & 0x000F) == 0xE)
+                {
+                    chp->PC = chp->stack[chp->SP];
+                    chp->SP++;
+                }
             }
     }
 }

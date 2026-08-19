@@ -5,8 +5,9 @@
 #include <raylib.h>
 #include <stdlib.h>
 
-#define WIDTH 640
-#define HEIGHT 320
+#define WIDTH 64
+#define HEIGHT 32
+#define SCALE 10
 #define FPS 120
 
 int sizeof_rom(FILE* rom);
@@ -34,7 +35,7 @@ int main(int argc, char** argv)
         Chip8 chp8;
         initialize_chip8(&chp8, ram); // initialize chip-8 interpreter
 
-        InitWindow(WIDTH, HEIGHT, "CHIP-8 Interpreter");
+        InitWindow(WIDTH*SCALE, HEIGHT*SCALE, "CHIP-8 Interpreter");
         SetTargetFPS(FPS);
 
         while(!WindowShouldClose())
@@ -78,12 +79,12 @@ void draw_display(Chip8* chp)
         {
             if(chp->display[x][y])
             {
-                DrawRectangle(w, h, 10, 10, WHITE);
-                w+=10;
+                DrawRectangle(w, h, SCALE, SCALE, WHITE);
+                w+=SCALE;
             }
             else
             {
-                DrawRectangle(w, h, 10, 10, BLACK);
+                DrawRectangle(w, h, SCALE, SCALE, BLACK);
                 w+=10;
             }
         
