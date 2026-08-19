@@ -31,12 +31,13 @@ void print_chip8(Chip8* chp)
 void fetch(Chip8* chp)
 {
     chp->IR = *chp->PC;
-    printf("IR: %d\n", chp->IR);
 }
 
 void decode(Chip8* chp)
 {
     chp->IR = ((chp->IR & 0x00FF) << 8) | ((chp->IR & 0xFF00) >> 8);
+    //printf("IR: %#06x\nPC: %p\nI: %#06x\n", chp->IR, chp->PC, chp->I);
+    //print_chip8(chp);
 }
 
 
@@ -72,18 +73,22 @@ void execute(Chip8* chp)
             // get the x and y position at Vx and Vy
             x = chp->V[x];
             y = chp->V[y];
-
+            unsigned char display_byte = 0;
            for(int i = 0; i <= (chp->IR & 0x000F); i++)
            {
                 for(int j = 0; j <= 8; j++)
                 {
-                    chp->display[x+j][y+i] = (((char*) chp->mem)[chp->I+j]); // need to get the every bit in this and put to [x+j]
+                    display_byte = ((char*)chp->mem)[chp->I-1];
+                    // isn't test yet but i guess i have to move on
+                    chp->display[x+j][y+i] = ((display_byte & (0x80>>j)) >> (7-j));
                 }
            }
+            chp->PC++;
            print_display(chp);
            break;
     }
 }
+
 
 void print_display(Chip8* chp)
 {
