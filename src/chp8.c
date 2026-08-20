@@ -23,9 +23,14 @@ void initialize_chip8(Chip8* chp, unsigned char* mem)
 void print_chip8(Chip8* chp)
 {
     printf("PC=%p\nIR=0x%04x\nI=0x%04x\n", (void*)chp->PC, chp->IR, chp->I);
-    for(int i = 0; i <= 0x4; i++)
+    for(int i = 0; i < 16; i++)
     {
         printf("V%X=0x%04x\n", i, chp->V[i]);
+    }
+    printf("SP=%d\n", chp->SP);
+    for(int i = 15; i != 0; i--)
+    {
+        printf("Stack %d: %p\n", i, chp->stack[i]);
     }
 }
 
@@ -39,6 +44,7 @@ void decode(Chip8* chp)
     chp->IR = ((chp->IR & 0x00FF) << 8) | ((chp->IR & 0xFF00) >> 8);
     //printf("IR: %#06x\nPC: %p\nI: %#06x\n", chp->IR, chp->PC, chp->I);
     print_chip8(chp);
+    getchar();
 }
 
 
@@ -114,10 +120,34 @@ void execute(Chip8* chp)
                 y = (chp->IR & 0x00F0) >> 4;
                 chp->V[x] = chp->V[y];
                 chp->PC++;
+                break;
+            }
+            if((chp->IR & 0x000F) == 2)
+            {
+                x = (chp->IR & 0x0F00) >> 8;
+                y = (chp->IR & 0x00F0) >> 4;
+                chp->V[x] &= chp->V[y];
+                chp->PC++;
+                break;
+            }
+            if((chp->IR & 0x000F) == 5)
+            {
+                x = (chp->IR & 0x0F00) >> 8;
+                y = (chp->IR & 0x00F0) >> 4;
+                
+                chp->V[x] -= chp->V[y];
+                if(chp->V[x] > chp->V[y])
+                {
+                    chp->V[0xF] = 1;
+                    chp->PC++;
+                    break;
+                }
+                chp->V[0x0F] = 0;
+                chp->PC++;
             }
             break;
         case 0x2:
-            chp->stack[chp->SP] = chp->PC;
+            chp->stack[chp->SP] = chp->PC+1;
             chp->PC = (unsigned short*)&chp->mem[chp->IR & 0x0FFF];
             chp->SP--;
             break;
@@ -126,10 +156,21 @@ void execute(Chip8* chp)
             {
                 if( (chp->IR & 0x000F) == 0xE)
                 {
-                    chp->PC = chp->stack[chp->SP];
+                    chp->PC = chp->stack[chp->SP+1];
+                    printf("chp->PC: %p\nchp->stack[chp->SP]: %p\n", chp->PC, chp->stack[chp->SP]);
                     chp->SP++;
                 }
             }
+            break;
+        case 0x4:
+            x = (chp->IR & 0x0F00) >> 8;
+            if(chp->V[x]  != (chp->IR & 0x00FF))
+            {
+                chp->PC+=2;
+                break;
+            }
+            chp->PC++;
+            break;
     }
 }
 

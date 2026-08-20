@@ -35,7 +35,7 @@ int main(int argc, char** argv)
         Chip8 chp8;
         initialize_chip8(&chp8, ram); // initialize chip-8 interpreter
 
-        InitWindow(WIDTH*SCALE, HEIGHT*SCALE, "CHIP-8 Interpreter");
+        InitWindow(WIDTH*SCALE+300, HEIGHT*SCALE, "CHIP-8 Interpreter");
         SetTargetFPS(FPS);
 
         while(!WindowShouldClose())
@@ -43,14 +43,13 @@ int main(int argc, char** argv)
             fetch(&chp8);
             decode(&chp8);
             execute(&chp8);
-            
+
             BeginDrawing();
                ClearBackground(BLACK); 
                draw_display(&chp8);
             EndDrawing();
         }
 
-        print_display(&chp8);
     return 0;
 }
 
