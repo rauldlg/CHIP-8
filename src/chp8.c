@@ -1,10 +1,12 @@
 #include <unistd.h>
+#include<raylib.h>
 #include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "chp8.h"
 #include <string.h>
 
+int keyboard(Chip8* chp);
 
 void initialize_chip8(Chip8* chp, unsigned char* mem)
 {
@@ -18,11 +20,32 @@ void initialize_chip8(Chip8* chp, unsigned char* mem)
     chp->SP = 15;
     chp->IR = 0;
     memset(chp->display, 0, sizeof(int)*64*32);
+
+    unsigned char fonts[0x1FF] = 
+    {
+        0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
+        0x20, 0x60, 0x20, 0x20, 0x70, // 1
+        0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
+        0xF0, 0x10, 0xF0, 0x10, 0xF0, // 3
+        0x90, 0x90, 0xF0, 0x10, 0x10, // 4
+        0xF0, 0x80, 0xF0, 0x10, 0xF0, // 5
+        0xF0, 0x80, 0xF0, 0x90, 0xF0, // 6
+        0xF0, 0x10, 0x20, 0x40, 0x40, // 7
+        0xF0, 0x90, 0xF0, 0x90, 0xF0, // 8
+        0xF0, 0x90, 0xF0, 0x10, 0xF0, // 9
+        0xF0, 0x90, 0xF0, 0x90, 0x90, // A
+        0xE0, 0x90, 0xE0, 0x90, 0xE0, // B
+        0xF0, 0x80, 0x80, 0x80, 0xF0, // C
+        0xE0, 0x90, 0x90, 0x90, 0xE0, // D
+        0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
+        0xF0, 0x80, 0xF0, 0x80, 0x80  // F
+    };
+    memcpy(chp->mem, fonts, 0x1ff); 
 }
 
 void print_chip8(Chip8* chp)
 {
-    printf("PC=%p\nIR=0x%04x\nI=0x%04x\n", (void*)chp->PC, chp->IR, chp->I);
+    printf("PC=%p\nIR=0x%04x\nI=0x%04x\nDT=0x%04x\nST=0x%04x\n", (void*)chp->PC, chp->IR, chp->I, chp->DT, chp->ST);
     for(int i = 0; i < 16; i++)
     {
         printf("V%X=0x%04x\n", i, chp->V[i]);
@@ -44,13 +67,15 @@ void decode(Chip8* chp)
     chp->IR = ((chp->IR & 0x00FF) << 8) | ((chp->IR & 0xFF00) >> 8);
     //printf("IR: %#06x\nPC: %p\nI: %#06x\n", chp->IR, chp->PC, chp->I);
     print_chip8(chp);
-    getchar();
+    //getchar();
 }
 
 
 void execute(Chip8* chp)
 {
     unsigned char x = 0;
+    chp->DT--;
+    chp->ST--;
     switch((chp->IR & 0xF000) >> 12)
     {
         case 0x3:
@@ -78,8 +103,8 @@ void execute(Chip8* chp)
             unsigned char y = (chp->IR & 0x00F0) >> 4;
 
             // get the x and y position at Vx and Vy
-            x = chp->V[x] % 63;
-            y = chp->V[y] % 31;
+            x = chp->V[x] % 64;
+            y = chp->V[y] % 32;
             unsigned char display_byte = 0;
            for(int i = 0; i < (chp->IR & 0x000F); i++)
            {
@@ -130,6 +155,18 @@ void execute(Chip8* chp)
                 chp->PC++;
                 break;
             }
+            if((chp->IR & 0x000F) == 4)
+            {
+                y = (chp->IR & 0x00F0) >> 4;
+                chp->V[0xF] = 0;
+                if((chp->V[x] + chp->V[y]) > 255)
+                {
+                    chp->V[0xF] = 1;
+                }
+                chp->V[x] += chp->V[y];
+                chp->PC++;
+                break;
+            }
             if((chp->IR & 0x000F) == 5)
             {
                 x = (chp->IR & 0x0F00) >> 8;
@@ -157,7 +194,6 @@ void execute(Chip8* chp)
                 if( (chp->IR & 0x000F) == 0xE)
                 {
                     chp->PC = chp->stack[chp->SP+1];
-                    printf("chp->PC: %p\nchp->stack[chp->SP]: %p\n", chp->PC, chp->stack[chp->SP]);
                     chp->SP++;
                 }
             }
@@ -170,6 +206,73 @@ void execute(Chip8* chp)
                 break;
             }
             chp->PC++;
+            break;
+        case 0xE:
+            keyboard(chp);
+            break;
+        case 0xF:
+            x = (chp->IR & 0x0F00) >> 8;
+            if((chp->IR & 0x00FF) == 0x07)
+            {
+                chp->V[x] = chp->DT;
+                chp->PC++;
+                break;
+            }
+            if((chp->IR & 0x0FF) == 0x1E)
+            {
+                chp->I += chp->V[x];
+                chp->PC++;
+                break;
+            }
+            if((chp->IR & 0x0FF) == 0x0A)
+            {
+                // first row
+                if(keyboard(chp) != -1)
+                {
+                    chp->PC++;
+                }
+                break;
+            }
+            if((chp->IR & 0x00FF) == 0x15)
+            {
+                x = (chp->IR & 0x0F00) >> 8;
+                chp->DT = chp->V[x];
+                chp->PC++;
+            }
+            if((chp->IR & 0x00FF) == 0x29)
+            {
+                x = (chp->IR & 0x0F00) >> 8;
+                chp->I = chp->V[x]*5;
+                chp->PC++;
+                break;
+            }
+            if((chp->IR & 0x00FF) == 0x33)
+            {
+                x = (chp->IR & 0x0F00) >> 8;
+                chp->mem[chp->I] = (chp->V[x] / 100) % 10;
+                chp->mem[chp->I+1] = (chp->V[x] / 10) % 10;
+                chp->mem[chp->I+2] = (chp->V[x] / 1) % 10;
+                chp->PC++;
+                break;
+            }
+            if((chp->IR & 0x00FF) == 0x55)
+            {
+                for(int i = 0; i < ((chp->IR & 0x0F00) >> 8); i++)
+                {
+                    chp->mem[chp->I+i] = chp->V[i];
+                }
+                chp->PC++;
+                break;
+            }
+            if((chp->IR & 0x00FF) == 0x65)
+            {
+                for(int i = 0; i < ((chp->IR & 0x0F00) >> 8); i++)
+                {
+                        chp->V[i] = chp->mem[chp->I+i]; 
+                }
+                chp->PC++;
+                break;
+            }
             break;
     }
 }
@@ -185,4 +288,99 @@ void print_display(Chip8* chp)
         }
         putchar('\n');
     }
+}
+
+
+int keyboard(Chip8* chp)
+{
+    unsigned x = (chp->IR & 0x0F00) >> 8;
+    if((chp->IR & 0x00FF) == 0x0A)
+    {
+       if(IsKeyPressed(KEY_ONE))
+       {
+            chp->V[x] = 1;
+       }
+       else if(IsKeyPressed(KEY_TWO))
+       {
+            chp->V[x] = 2;
+       }
+       else if(IsKeyPressed(KEY_THREE))
+       {
+            chp->V[x] = 3;
+       }
+       else if(IsKeyPressed(KEY_FOUR))
+       {
+            chp->V[x] = 0xC;
+       }
+       // second row
+       else if(IsKeyPressed(KEY_Q))
+       {
+            chp->V[x] = 4;
+       }
+       else if(IsKeyPressed(KEY_W))
+       {
+            chp->V[x] = 5;
+       }
+       else if(IsKeyPressed(KEY_E))
+       {
+            chp->V[x] = 6;
+       }
+       else if(IsKeyPressed(KEY_R))
+       {
+            chp->V[x] = 0xD;
+       }
+       // third row
+       else if(IsKeyPressed(KEY_A))
+       {
+            chp->V[x] = 0x7;
+       }
+       else if(IsKeyPressed(KEY_S))
+       {
+            chp->V[x] = 0x8;
+       }
+       else if(IsKeyPressed(KEY_D))
+       {
+            chp->V[x] = 0x9;
+       }
+       else if(IsKeyPressed(KEY_F))
+       {
+            chp->V[x] = 0xE;
+       }
+       // last row
+       else if(IsKeyPressed(KEY_Z))
+       {
+            chp->V[x] = 0xA;
+       }
+       else if(IsKeyPressed(KEY_X))
+       {
+            chp->V[x] = 0x0;
+       }
+       else if(IsKeyPressed(KEY_C))
+       {
+            chp->V[x] = 0xB;
+       }
+       else if(IsKeyPressed(KEY_V))
+       {
+            chp->V[x] = 0xF;
+       }else
+       {
+            return -1;
+       }
+       return 0;
+    }
+    else if((chp->IR & 0x00FF) == 0xA1)
+    {
+        
+       if(IsKeyPressed(KEY_ONE) && chp->V[x] == 1)
+       {
+            chp->PC+=2;
+       }
+       else
+       {
+          chp->PC++; 
+       }
+       return 0;
+
+    }
+    return -1;
 }
