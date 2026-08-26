@@ -8,7 +8,7 @@
 #define WIDTH 64
 #define HEIGHT 32
 #define SCALE 10
-#define FPS 300
+#define FPS 60
 
 int sizeof_rom(FILE* rom);
 
@@ -43,8 +43,8 @@ int main(int argc, char** argv)
             fetch(&chp8);
             decode(&chp8);
             execute(&chp8);
-            chp8.DT--;
-            chp8.ST--;
+            if(chp8.DT > 0) chp8.DT--;
+            if(chp8.ST > 0) chp8.ST--;
             BeginDrawing();
                ClearBackground(BLACK); 
                draw_display(&chp8);
