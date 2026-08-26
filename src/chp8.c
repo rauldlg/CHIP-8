@@ -67,7 +67,7 @@ void decode(Chip8* chp)
     chp->IR = ((chp->IR & 0x00FF) << 8) | ((chp->IR & 0xFF00) >> 8);
     //printf("IR: %#06x\nPC: %p\nI: %#06x\n", chp->IR, chp->PC, chp->I);
     print_chip8(chp);
-    getchar();
+    //getchar();
 
 }
 
@@ -105,6 +105,7 @@ void execute(Chip8* chp)
             x = chp->V[x] % 64;
             y = chp->V[y] % 32;
             unsigned char display_byte = 0;
+            chp->V[0xF] = 0;
            for(int i = 0; i < (chp->IR & 0x000F); i++)
            {
                 for(int j = 0; j <= 8; j++)
@@ -113,7 +114,6 @@ void execute(Chip8* chp)
                     // isn't test yet but i guess i have to move on
                     unsigned char collide = chp->display[x+j][y+i];
                     chp->display[x+j][y+i] ^= ((display_byte & (0x80>>j)) >> (7-j));
-                    chp->V[0xF] = 0;
                     if((collide == 1) && (chp->display[x+j][y+i] == 0))
                     {
                         chp->V[0xF] = 1;
