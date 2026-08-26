@@ -1,4 +1,5 @@
 #include "chp8.h"
+#include <math.h>
 #include <time.h>
 #include <string.h>
 #include <stdio.h>
@@ -8,7 +9,7 @@
 #define WIDTH 64
 #define HEIGHT 32
 #define SCALE 10
-#define FPS 60
+#define FPS 300
 
 int sizeof_rom(FILE* rom);
 
@@ -36,6 +37,19 @@ int main(int argc, char** argv)
         initialize_chip8(&chp8, ram); // initialize chip-8 interpreter
 
         InitWindow(WIDTH*SCALE+300, HEIGHT*SCALE, "CHIP-8 Interpreter");
+        InitAudioDevice();
+        SetAudioStreamBufferSizeDefault(4096);
+
+        float buffer[4096] = {};
+
+        AudioStream stream = LoadAudioStream(44100, 32, 1);
+        float pan = 0.0f;
+        SetAudioStreamPan(stream, pan);
+
+        int sineFrequency = 440;
+        int newSineFrequency = 440;
+        int sineIndex = 0;
+
         SetTargetFPS(FPS);
 
         while(!WindowShouldClose())
@@ -44,7 +58,28 @@ int main(int argc, char** argv)
             decode(&chp8);
             execute(&chp8);
             if(chp8.DT > 0) chp8.DT--;
-            if(chp8.ST > 0) chp8.ST--;
+            if(chp8.ST > 0)
+            {
+                chp8.ST--;
+                // play audio
+                PlayAudioStream(stream);
+                for (int i = 0; i < 4096; i++)
+                {
+                    int wavelength = 44100/sineFrequency;
+                    buffer[i] = sinf(2*PI*sineIndex/wavelength);
+                    sineIndex++;
+                    if (sineIndex >= wavelength)
+                        {
+                            sineFrequency = newSineFrequency;
+                            sineIndex = 0;
+                        }
+                    UpdateAudioStream(stream, buffer, 4096);
+                }
+            }
+            else
+            {
+                StopAudioStream(stream);
+            }
             BeginDrawing();
                ClearBackground(BLACK); 
                draw_display(&chp8);
