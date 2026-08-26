@@ -16,7 +16,7 @@ void initialize_chip8(Chip8* chp, unsigned char* mem)
 
     chp->mem = mem;
     chp->PC = (unsigned short*)&mem[0x200];
-    memset(chp->stack, 0, sizeof(short)*16);
+    memset(chp->stack, 0, sizeof(chp->stack)*16);
     chp->SP = 15;
     chp->IR = 0;
     memset(chp->display, 0, sizeof(int)*64*32);
@@ -65,7 +65,6 @@ void fetch(Chip8* chp)
 void decode(Chip8* chp)
 {
     chp->IR = ((chp->IR & 0x00FF) << 8) | ((chp->IR & 0xFF00) >> 8);
-    //printf("IR: %#06x\nPC: %p\nI: %#06x\n", chp->IR, chp->PC, chp->I);
     print_chip8(chp);
     //getchar();
 
@@ -108,10 +107,9 @@ void execute(Chip8* chp)
             chp->V[0xF] = 0;
            for(int i = 0; i < (chp->IR & 0x000F); i++)
            {
-                for(int j = 0; j <= 8; j++)
+                for(int j = 0; j < 8; j++)
                 {
                     display_byte = ((char*)chp->mem)[chp->I+i];
-                    // isn't test yet but i guess i have to move on
                     unsigned char collide = chp->display[x+j][y+i];
                     chp->display[x+j][y+i] ^= ((display_byte & (0x80>>j)) >> (7-j));
                     if((collide == 1) && (chp->display[x+j][y+i] == 0))
@@ -308,8 +306,6 @@ void execute(Chip8* chp)
             }
             if((chp->IR & 0x0FF) == 0x0A)
             {
-                chp->PC++;
-                break;
                 // first row
                 if(keyboard(chp) != -1)
                 {
